@@ -13,7 +13,6 @@ export function useWebSocket(symbols: string) {
 
     socket.value.onopen = () => {
       console.log("WebSocket connected!");
-      socket.value?.send(JSON.stringify({ userKey: STREAMING_API_KEY, symbol: symbols }));
       sendMessage({ userKey: STREAMING_API_KEY, symbol: symbols });
     };
 

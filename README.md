@@ -66,7 +66,7 @@ leveraging **WebSockets** for instant price updates and a **charting library** f
 As the developer behind this project, I want to address a few important points:
 
 1. **WebSocket Implementation**:  
-   The WebSocket connection has been developed, but the live data from the WebSocket service is not currently functional due to the connection being down or unresponsive. Once the connection is stable, real-time pricing updates will be available.
+   The WebSocket connection has been implemented as requested. However, the symbol update is not functional from the provider’s side, once the user changes symbol the live functionity is stoping. Despite multiple attempts to resolve the issue, real-time pricing updates remain unavailable due to the provider's service limitations.
 
 2. **Dropdown of Exchanges**:  
    The instructions called for a dropdown to select different exchanges. Unfortunately, this couldn't be implemented as planned, since the **TraderMade API** does not provide data on available exchanges at this time. Without this data.

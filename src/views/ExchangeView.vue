@@ -84,8 +84,6 @@ const rateData = ref<ExchangeRateData | null>(null);
 const selectedTime = ref('15M');
 const timeFrames = ['15M', '1H', '1D', '1W', '1M'];
 const historicalData = ref<HistoricalRate[]>([]);
-const { exchangeRates } = useWebSocket(`${fromCurrency.value}${toCurrency.value}`);
-const currentPrice = ref(0);
 const priceChange = ref(0);
 const percentageChange = ref(0);
 let fromCurrencyFlagClass: unknown
@@ -124,7 +122,12 @@ const fetchRate = async () => {
       price: Number(data.price),
       change: Number(data.change),
     }
-    currentPrice.value = Number(data.price);
+    //currentPrice.value = Number(data.price);
+    exchangeRates.value[`${fromCurrency.value}${toCurrency.value}`] = {
+      bid: Number(data.price),
+      ask: Number(data.price),
+      mid: Number(data.price)
+    };
   } catch (error) {
     console.error('Failed to fetch rate:', error)
     rateData.value = {
@@ -148,23 +151,19 @@ watch([fromCurrency, toCurrency], () => {
   }
 });
 
-// Watch for price updates
-// watch(exchangeRates, (newRates) => {
-//   debugger;
-//   const symbol = `${fromCurrency.value}${toCurrency.value}`;
-//   if (newRates[symbol]) {
-//     currentPrice.value = newRates[symbol].mid;
-//   }
-// });
+const { exchangeRates, sendMessage } = useWebSocket(`${fromCurrency.value}${toCurrency.value}`);
+
+const currentPrice = computed(() => {
+  const symbol = `${fromCurrency.value}${toCurrency.value}`;
+  return exchangeRates.value[symbol]?.mid;
+});
 
 watchEffect(() => {
   const symbol = `${fromCurrency.value}${toCurrency.value}`;
   if (exchangeRates.value[symbol]) {
-    currentPrice.value = exchangeRates.value[symbol].mid;
+    console.log('Price updated:', exchangeRates.value[symbol].mid);
   }
 });
-
-const { sendMessage } = useWebSocket(`${fromCurrency.value}${toCurrency.value}`);
 
 const updateFromCurrency = (symbol: string) => {
   fromCurrency.value = symbol;
@@ -191,7 +190,11 @@ const selectTimeFrame = async (time?: string) => {
 const updatePriceDisplay = () => {
   if (historicalData.value && historicalData.value.length > 0) {
     const latestQuote = historicalData.value[historicalData.value.length - 1];
-    currentPrice.value = latestQuote.close;
+    exchangeRates.value[`${fromCurrency.value}${toCurrency.value}`] = {
+      mid: latestQuote.close,
+      ask: latestQuote.close,
+      bid: latestQuote.close
+    };
 
     const firstQuote = historicalData.value[0];
     priceChange.value = latestQuote.close - firstQuote.close;
