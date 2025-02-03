@@ -57,7 +57,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch, computed } from 'vue'
+import { ref, onMounted, watch, computed, watchEffect } from 'vue'
 import { getLiveCurrencies, getLiveExchangeRate } from '@/services/CurrencyApiService'
 import { getHistoricalRates } from '@/services/ChartApiService'
 import { useWebSocket } from "@/services/WebsocketService";
@@ -84,7 +84,7 @@ const rateData = ref<ExchangeRateData | null>(null);
 const selectedTime = ref('15M');
 const timeFrames = ['15M', '1H', '1D', '1W', '1M'];
 const historicalData = ref<HistoricalRate[]>([]);
-const { exchangeRates } = useWebSocket([`${fromCurrency.value}${toCurrency.value}`]);
+const { exchangeRates } = useWebSocket(`${fromCurrency.value}${toCurrency.value}`);
 const currentPrice = ref(0);
 const priceChange = ref(0);
 const percentageChange = ref(0);
@@ -141,25 +141,42 @@ onMounted(() => {
   selectTimeFrame(selectedTime.value)
 })
 
-watch([fromCurrency, toCurrency], fetchRate)
-
-// Watch for price updates
-watch(exchangeRates, (newRates) => {
-  const symbol = `${fromCurrency.value}${toCurrency.value}`;
-  if (newRates[symbol]) {
-    currentPrice.value = newRates[symbol].mid;
+// watch([fromCurrency, toCurrency], fetchRate)
+watch([fromCurrency, toCurrency], () => {
+  if (fromCurrency.value && toCurrency.value) {
+    sendMessage({ symbol: `${fromCurrency.value}${toCurrency.value}` });
   }
 });
+
+// Watch for price updates
+// watch(exchangeRates, (newRates) => {
+//   debugger;
+//   const symbol = `${fromCurrency.value}${toCurrency.value}`;
+//   if (newRates[symbol]) {
+//     currentPrice.value = newRates[symbol].mid;
+//   }
+// });
+
+watchEffect(() => {
+  const symbol = `${fromCurrency.value}${toCurrency.value}`;
+  if (exchangeRates.value[symbol]) {
+    currentPrice.value = exchangeRates.value[symbol].mid;
+  }
+});
+
+const { sendMessage } = useWebSocket(`${fromCurrency.value}${toCurrency.value}`);
 
 const updateFromCurrency = (symbol: string) => {
   fromCurrency.value = symbol;
   selectTimeFrame();
-}
+  sendMessage({ symbol: `${fromCurrency.value}${toCurrency.value}` });
+};
 
 const updateToCurrency = (symbol: string) => {
   toCurrency.value = symbol;
   selectTimeFrame();
-}
+  sendMessage({ symbol: `${fromCurrency.value}${toCurrency.value}` });
+};
 
 const selectTimeFrame = async (time?: string) => {
   if (time) {

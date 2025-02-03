@@ -1,8 +1,8 @@
 import { ref, onUnmounted } from "vue";
-const SOCKET_URL = import.meta.env.VITE_SOCKET_URL; // WebSocket URL
-const STREAMING_API_KEY = import.meta.env.VITE_SOCKET_KEY; // Replace with your API key
+const SOCKET_URL = import.meta.env.VITE_SOCKET_URL;
+const STREAMING_API_KEY = import.meta.env.VITE_SOCKET_KEY;
 
-export function useWebSocket(symbols: string[]) {
+export function useWebSocket(symbols: string) {
   const socket = ref<WebSocket | null>(null);
   const exchangeRates = ref<Record<string, { bid: number; ask: number; mid: number }>>({});
 
@@ -13,11 +13,8 @@ export function useWebSocket(symbols: string[]) {
 
     socket.value.onopen = () => {
       console.log("WebSocket connected!");
-      socket.value?.send(JSON.stringify({ userKey: STREAMING_API_KEY }));
-      // Authenticate
-      symbols.forEach(symbol => {
-        socket.value?.send(JSON.stringify({ symbol } ));
-      });
+      socket.value?.send(JSON.stringify({ userKey: STREAMING_API_KEY, symbol: symbols }));
+      sendMessage({ userKey: STREAMING_API_KEY, symbol: symbols });
     };
 
     socket.value.onmessage = (event) => {
@@ -25,10 +22,13 @@ export function useWebSocket(symbols: string[]) {
         if (event.data !== 'Connected') {
           const data = JSON.parse(event.data);
           if (data.symbol) {
-            exchangeRates.value[data.symbol] = {
-              bid: data.bid,
-              ask: data.ask,
-              mid: data.mid,
+            exchangeRates.value = {
+              ...exchangeRates.value,
+              [data.symbol]: {
+                bid: data.bid,
+                ask: data.ask,
+                mid: data.mid,
+              },
             };
           }
         }
@@ -47,6 +47,14 @@ export function useWebSocket(symbols: string[]) {
     };
   };
 
+  const sendMessage = (message: object) => {
+    if (socket.value && socket.value.readyState === WebSocket.OPEN) {
+      socket.value.send(JSON.stringify(message));
+    } else {
+      console.warn("WebSocket is not open. Message not sent:", message);
+    }
+  }
+
   const disconnect = () => {
     socket.value?.close();
     socket.value = null;
@@ -58,5 +66,5 @@ export function useWebSocket(symbols: string[]) {
   // Cleanup on component unmount
   onUnmounted(disconnect);
 
-  return { exchangeRates, disconnect };
+  return { exchangeRates, sendMessage, disconnect };
 }
