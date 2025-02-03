@@ -1,5 +1,21 @@
 # About Forex Exchange APP
 
+--- 
+
+## Instalation instructions 
+
+### 1. Clone the repository to your local machine:
+- git clone fx-xchange
+- cd fx-xchange
+### 2. Install dependencies:  
+- npm install
+### 3. Start the development server:
+- npm run dev
+### 4. Access the application in your browser at:  
+- 'http://localhost:5173/'
+
+---
+
 ## Overview
 
 FX Exchange responsive web application designed for real-time **foreign exchange (FX) rate tracking and analysis**.
